@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Description>Redis backend for Cirreum.Coordination — distributed, multi-instance atomic coordination. Implements IReplayGuard (atomic SET NX claim for replay / nonce protection) and IRequestThrottle (atomic Lua fixed-window counter for rate limiting) over an application-provided StackExchange.Redis IConnectionMultiplexer. The adapter is blind to connection configuration, sharing the same connection the rest of your app uses, and coordinates across every instance sharing the connection.</Description>
+		<PackageTags>cirreum;coordination;redis;replay;nonce;throttle;ratelimit;distributed</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- The coordination contracts (IReplayGuard / IRequestThrottle / CoordinationBuilder) live in
+		     Cirreum.Coordination; this package contributes the Redis-backed implementations + UseRedis(). -->
+		<PackageReference Include="Cirreum.Coordination" Version="1.0.0" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Cirreum.Coordination" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Cirreum.Coordination.Redis.Tests" />
+	</ItemGroup>
+
+</Project>

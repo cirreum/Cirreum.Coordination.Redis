@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <File Path="../src/Directory.Build.props" />
+    <Project Path="../src/Cirreum.Coordination.Redis/Cirreum.Coordination.Redis.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="Directory.Build.props" />
+    <Project Path="Cirreum.Coordination.Redis.Tests/Cirreum.Coordination.Redis.Tests.csproj" />
+  </Folder>
+</Solution>
