@@ -3,7 +3,7 @@
 [![NuGet Version](https://img.shields.io/nuget/v/Cirreum.Coordination.Redis.svg?style=flat-square&labelColor=1F1F1F&color=003D8F)](https://www.nuget.org/packages/Cirreum.Coordination.Redis/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Cirreum.Coordination.Redis.svg?style=flat-square&labelColor=1F1F1F&color=003D8F)](https://www.nuget.org/packages/Cirreum.Coordination.Redis/)
 [![GitHub Release](https://img.shields.io/github/v/release/cirreum/Cirreum.Coordination.Redis?style=flat-square&labelColor=1F1F1F&color=FF3B2E)](https://github.com/cirreum/Cirreum.Coordination.Redis/releases)
-[![License](https://img.shields.io/github/license/cirreum/Cirreum.Coordination.Redis?style=flat-square&labelColor=1F1F1F&color=F2F2F2)](https://github.com/cirreum/Cirreum.Coordination.Redis/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-F2F2F2?style=flat-square&labelColor=1F1F1F)](https://github.com/cirreum/Cirreum.Coordination.Redis/blob/main/LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-003D8F?style=flat-square&labelColor=1F1F1F)](https://dotnet.microsoft.com/)
 
 **Redis backend for Cirreum.Coordination — distributed, multi-instance replay protection and rate limiting**
