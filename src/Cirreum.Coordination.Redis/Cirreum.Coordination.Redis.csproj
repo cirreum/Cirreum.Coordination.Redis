@@ -9,7 +9,7 @@
 		<!-- The coordination contracts (IReplayGuard / IRequestThrottle / CoordinationBuilder) live in
 		     Cirreum.Coordination; this package contributes the Redis-backed implementations + UseRedis(). -->
 		<PackageReference Include="Cirreum.Coordination" Version="1.0.0" />
-		<PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+		<PackageReference Include="StackExchange.Redis" Version="3.0.11" />
 	</ItemGroup>
 
 	<ItemGroup>
