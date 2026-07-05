@@ -8,12 +8,14 @@ using StackExchange.Redis;
 /// Lua script: <c>INCR</c> the key, and on the first hit (<c>current == 1</c>) anchor the window with
 /// <c>PEXPIRE</c> so it does not slide; the script returns the post-increment count and the remaining
 /// window (<c>PTTL</c>) in one round trip, so the count is lost-update-free across every instance sharing
-/// the connection. Blind: it owns no connection configuration, resolving the application-provided
-/// <see cref="IConnectionMultiplexer"/> from DI.
+/// the connection. Keys carry the registered <see cref="CoordinationScope"/> when one is present, so
+/// applications and environments sharing an instance never share windows — a colliding key string (an IP
+/// address, say) counts separately per scope. Blind: it owns no connection configuration, resolving the
+/// application-provided <see cref="IConnectionMultiplexer"/> from DI.
 /// </summary>
-internal sealed class RedisRequestThrottle(IConnectionMultiplexer connection) : IRequestThrottle {
+internal sealed class RedisRequestThrottle(IConnectionMultiplexer connection, CoordinationScope? scope = null) : IRequestThrottle {
 
-	private const string KeyPrefix = "cirreum:coordination:throttle:";
+	private readonly string _keyPrefix = RedisCoordinationKeySpace.RootFor(scope) + "throttle:";
 
 	// Fixed window, evaluated atomically server-side. INCR is atomic; PEXPIRE (re)arms the window only on the
 	// first hit (current == 1) OR whenever the key is found without an expiry (ttl < 0) — so the window is
@@ -50,7 +52,7 @@ internal sealed class RedisRequestThrottle(IConnectionMultiplexer connection) : 
 		var database = connection.GetDatabase();
 
 		var raw = await database
-			.ScriptEvaluateAsync(FixedWindowScript, [KeyPrefix + key], [(RedisValue)windowMilliseconds])
+			.ScriptEvaluateAsync(FixedWindowScript, [this._keyPrefix + key], [(RedisValue)windowMilliseconds])
 			.ConfigureAwait(false);
 
 		var result = (RedisResult[]?)raw

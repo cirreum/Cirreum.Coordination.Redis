@@ -7,11 +7,11 @@ public sealed class RedisRequestThrottleTests {
 
 	private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
-	private static (RedisRequestThrottle throttle, IDatabase db) Build() {
+	private static (RedisRequestThrottle throttle, IDatabase db) Build(CoordinationScope? scope = null) {
 		var db = Substitute.For<IDatabase>();
 		var connection = Substitute.For<IConnectionMultiplexer>();
 		connection.GetDatabase(Arg.Any<int>(), Arg.Any<object>()).Returns(db);
-		return (new RedisRequestThrottle(connection), db);
+		return (new RedisRequestThrottle(connection, scope), db);
 	}
 
 	// The Lua script returns { count, pttl } as a multi-bulk; RedisResult.Create(RedisValue[]) reproduces it.
@@ -71,6 +71,30 @@ public sealed class RedisRequestThrottleTests {
 
 		outcome.Allowed.Should().BeFalse();
 		outcome.RetryAfter.Should().Be(TimeSpan.Zero);
+	}
+
+	[Fact]
+	public async Task The_window_key_is_the_prefixed_caller_key() {
+		var (throttle, db) = Build();
+		RedisKey[]? keys = null;
+		db.ScriptEvaluateAsync(Arg.Any<string>(), Arg.Do<RedisKey[]>(k => keys = k), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>())
+			.Returns(ScriptResult(count: 1, pttlMilliseconds: 60_000));
+
+		await throttle.RecordAsync("client:abc", Window, 5);
+
+		keys.Should().Equal((RedisKey)"cirreum:coordination:throttle:client:abc");
+	}
+
+	[Fact]
+	public async Task A_registered_scope_namespaces_the_window_key() {
+		var (throttle, db) = Build(CoordinationScope.For("MyApp", "Production"));
+		RedisKey[]? keys = null;
+		db.ScriptEvaluateAsync(Arg.Any<string>(), Arg.Do<RedisKey[]>(k => keys = k), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>())
+			.Returns(ScriptResult(count: 1, pttlMilliseconds: 60_000));
+
+		await throttle.RecordAsync("client:abc", Window, 5);
+
+		keys.Should().Equal((RedisKey)"cirreum:coordination:MyApp:Production:throttle:client:abc");
 	}
 
 	[Theory]

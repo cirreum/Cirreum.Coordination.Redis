@@ -10,12 +10,13 @@ using System.Text;
 /// the set succeeds only when the key is absent, so exactly one caller wins per token while the claim is
 /// live; Redis evicts the key at the PX deadline, re-opening the token once the window elapses. Coordinates
 /// replay protection across every instance sharing the connection (unlike the single-instance in-memory guard).
-/// Blind: it owns no connection configuration, resolving the application-provided
-/// <see cref="IConnectionMultiplexer"/> from DI.
+/// Keys carry the registered <see cref="CoordinationScope"/> when one is present, so applications and
+/// environments sharing an instance never share claims. Blind: it owns no connection configuration,
+/// resolving the application-provided <see cref="IConnectionMultiplexer"/> from DI.
 /// </summary>
-internal sealed class RedisReplayGuard(IConnectionMultiplexer connection) : IReplayGuard {
+internal sealed class RedisReplayGuard(IConnectionMultiplexer connection, CoordinationScope? scope = null) : IReplayGuard {
 
-	private const string KeyPrefix = "cirreum:coordination:replay:";
+	private readonly string _keyPrefix = RedisCoordinationKeySpace.RootFor(scope) + "replay:";
 
 	/// <inheritdoc />
 	public async ValueTask<bool> TryClaimAsync(
@@ -38,7 +39,7 @@ internal sealed class RedisReplayGuard(IConnectionMultiplexer connection) : IRep
 
 		return await database
 			.StringSetAsync(
-				ToReplayKey(token),
+				this.ToReplayKey(token),
 				"1",
 				ttl,
 				keepTtl: false,
@@ -46,9 +47,9 @@ internal sealed class RedisReplayGuard(IConnectionMultiplexer connection) : IRep
 			.ConfigureAwait(false);
 	}
 
-	private static string ToReplayKey(string token) {
+	private string ToReplayKey(string token) {
 		var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-		return KeyPrefix + Convert.ToHexString(hash);
+		return this._keyPrefix + Convert.ToHexString(hash);
 	}
 
 }

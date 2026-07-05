@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `RedisSignalBroadcaster` implements `ISignalBroadcaster` (the third coordination primitive, new in
+  `Cirreum.Coordination 1.1.0`) over Redis pub/sub (`ISubscriber`). Publishes to
+  `cirreum:coordination:signal:{channel}` with native pub/sub semantics — at-most-once, unbuffered, to
+  currently-connected subscribers only — matching the contract's live-signal (not durable message) charter.
+  Each subscription drains through its own sequential pump (a single-reader queue fed from the Redis
+  callback), so the handler runs one signal at a time, in arrival order, off the Redis callback thread, and
+  a faulted handler is isolated per-signal — it can never tear down the subscription.
+- `UseRedis(string? connectionKey = null)` — optional keyed-DI connection selection. When a key is passed,
+  all three primitives resolve the `IConnectionMultiplexer` registered under that key
+  (`AddKeyedSingleton<IConnectionMultiplexer>(key, ...)`) instead of the default registration, so
+  coordination traffic can ride a dedicated, differently-credentialed Redis connection rather than sharing
+  the app's default one — whoever can publish on the coordination connection can forge its signals (for
+  example auth-event delivery), so it can warrant its own trust boundary. The adapter stays blind either
+  way: it still owns no connection string or configuration. Omitting the key keeps today's behavior
+  exactly; a blank (empty / whitespace) key is rejected at composition time, and an unregistered key fails
+  fast at first resolution.
+- **`CoordinationScope` support** (new in `Cirreum.Coordination 1.2.0`): when a scope is registered
+  (`c.WithScope("MyApp", "Production")`), every key and channel is namespaced under it —
+  `cirreum:coordination:{scope}:replay|throttle|signal:...` — so applications and environments sharing one
+  Redis instance never share claims, windows, or signals. The scope sits directly after the keyspace root,
+  so one backend-side access rule per identity covers everything its application touches (key glob
+  `~cirreum:coordination:MyApp:Production:*`, channel pattern
+  `&cirreum:coordination:MyApp:Production:signal:*`). Both the scope and the connection resolve at first
+  use, so `UseRedis()` / `WithScope()` / multiplexer registration compose in any order. No scope → the
+  unscoped 1.0.0 layout, unchanged.
+
+### Changed
+
+- `UseRedis()` now registers all three coordination primitives (previously two): `IReplayGuard`,
+  `IRequestThrottle`, and the new `ISignalBroadcaster`.
+- `Cirreum.Coordination` dependency: `1.0.0` → `1.2.0` (the source of the `ISignalBroadcaster` contract
+  and the `CoordinationScope` concept).
+- A scoped deployment rolls its replay/throttle keys to the scoped layout on upgrade: during a rolling
+  deploy, old replicas claim under unscoped keys while new ones use scoped keys, so the replay and
+  throttle windows briefly don't see each other across old/new replicas. All of this state is
+  TTL-ephemeral; the windows converge as soon as the rollout completes.
+
 ## [1.0.0] - 2026-07-03
 
 ### Added

@@ -8,11 +8,11 @@ public sealed class RedisReplayGuardTests {
 
 	private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(1);
 
-	private static (RedisReplayGuard guard, IDatabase db) Build() {
+	private static (RedisReplayGuard guard, IDatabase db) Build(CoordinationScope? scope = null) {
 		var db = Substitute.For<IDatabase>();
 		var connection = Substitute.For<IConnectionMultiplexer>();
 		connection.GetDatabase(Arg.Any<int>(), Arg.Any<object>()).Returns(db);
-		return (new RedisReplayGuard(connection), db);
+		return (new RedisReplayGuard(connection, scope), db);
 	}
 
 	// The code calls the canonical keepTtl overload (the When-only one is a forwarding default-interface
@@ -52,6 +52,23 @@ public sealed class RedisReplayGuardTests {
 			TimeSpan.FromSeconds(30),
 			Arg.Any<bool>(),
 			When.NotExists,
+			Arg.Any<CommandFlags>());
+	}
+
+	[Fact]
+	public async Task A_registered_scope_namespaces_the_replay_key() {
+		var (guard, db) = Build(CoordinationScope.For("MyApp", "Production"));
+		StubSet(db, result: true);
+
+		await guard.TryClaimAsync("nonce", Ttl);
+
+		var expectedKey = (RedisKey)("cirreum:coordination:MyApp:Production:replay:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("nonce"))));
+		await db.Received(1).StringSetAsync(
+			expectedKey,
+			Arg.Any<RedisValue>(),
+			Arg.Any<TimeSpan?>(),
+			Arg.Any<bool>(),
+			Arg.Any<When>(),
 			Arg.Any<CommandFlags>());
 	}
 
