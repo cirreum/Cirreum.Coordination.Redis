@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Updated
+
+- Updated `StackExchange.Redis` `3.0.17` → `3.0.25`.
+
 ## [1.1.1] - 2026-07-19
 
 ### Updated

@@ -10,7 +10,7 @@
 		     CoordinationScope) live in Cirreum.Coordination; this package contributes the Redis-backed
 		     implementations + UseRedis(). -->
 		<PackageReference Include="Cirreum.Coordination" Version="1.2.1" />
-		<PackageReference Include="StackExchange.Redis" Version="3.0.17" />
+		<PackageReference Include="StackExchange.Redis" Version="3.0.25" />
 	</ItemGroup>
 
 	<ItemGroup>
