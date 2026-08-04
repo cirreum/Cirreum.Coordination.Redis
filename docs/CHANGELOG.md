@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-04
+
+### Added
+
+- **Boot-time fail-fast when `UseRedis()` has no `IConnectionMultiplexer`.** `UseRedis()` now
+  contributes an `ICoordinationPostureCheck` (the seam added in `Cirreum.Coordination` 1.3.0)
+  verifying the multiplexer it resolves lazily — unkeyed, or under the given `connectionKey` —
+  is actually registered, so the mis-configuration surfaces as a clear error at
+  `CoordinationPostureValidator.Validate` instead of on the first coordinated request. The
+  check is anchored to the backend registration itself: a later `UseXxx()` that replaces the
+  Redis backend disarms it. (From the backlog.)
+
+### Updated
+
+- Re-pinned `Cirreum.Coordination` `1.2.1` → `1.3.0` (the `ICoordinationPostureCheck` seam).
+
 ## [1.1.3] - 2026-07-31
 
 ### Updated

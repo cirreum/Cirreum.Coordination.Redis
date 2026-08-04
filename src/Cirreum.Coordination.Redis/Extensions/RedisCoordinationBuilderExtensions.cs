@@ -39,12 +39,20 @@ public static class RedisCoordinationBuilderExtensions {
 
 		// Both the connection and the scope resolve when the singleton is first used, so UseRedis() /
 		// WithScope() / the multiplexer registration compose in any order.
-		builder.Services.Replace(ServiceDescriptor.Singleton<IReplayGuard>(
-			sp => new RedisReplayGuard(ResolveConnection(sp, connectionKey), sp.GetService<CoordinationScope>())));
+		var replayGuard = ServiceDescriptor.Singleton<IReplayGuard>(
+			sp => new RedisReplayGuard(ResolveConnection(sp, connectionKey), sp.GetService<CoordinationScope>()));
+		builder.Services.Replace(replayGuard);
 		builder.Services.Replace(ServiceDescriptor.Singleton<IRequestThrottle>(
 			sp => new RedisRequestThrottle(ResolveConnection(sp, connectionKey), sp.GetService<CoordinationScope>())));
 		builder.Services.Replace(ServiceDescriptor.Singleton<ISignalBroadcaster>(
 			sp => new RedisSignalBroadcaster(ResolveConnection(sp, connectionKey), sp.GetService<CoordinationScope>())));
+
+		// Boot-time posture: the multiplexer resolves lazily above, so its absence would
+		// otherwise surface on the first coordinated request. Anchoring the check to the
+		// replay-guard descriptor disarms it if a later UseXxx() replaces this backend.
+		builder.Services.AddSingleton<ICoordinationPostureCheck>(
+			new RedisConnectionPostureCheck(connectionKey, replayGuard));
+
 		return builder;
 	}
 
