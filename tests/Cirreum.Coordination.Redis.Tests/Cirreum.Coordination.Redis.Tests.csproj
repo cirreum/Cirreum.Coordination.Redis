@@ -8,16 +8,15 @@
 	<ItemGroup>
 		<!-- The src references only DI.Abstractions (via Cirreum.Coordination); the tests build a real
 		     container, so they need the full DI package for BuildServiceProvider. -->
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
 		<PackageReference Include="xunit" Version="2.9.3" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+		<PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 		<PackageReference Include="AwesomeAssertions" Version="9.6.0" />
 		<PackageReference Include="NSubstitute" Version="6.2.0" />
-		<PackageReference Include="StackExchange.Redis" Version="3.1.31" />
 	</ItemGroup>
 
 	<ItemGroup>
